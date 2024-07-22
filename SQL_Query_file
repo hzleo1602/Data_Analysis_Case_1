@@ -1,0 +1,44 @@
+# This is the SQL query file where i have created the query to find the given point of the case.
+
+Create DataBase Truck;
+
+//after creating the db i had imported CVS file as a flat file in sql, which was done after cleansing te raw dataset. 
+
+select * from dbo.dummydatasetnew
+
+// this query is created to find the total eligibale trucks that fall for the claim value.
+SELECT 
+    ISNULL(Manufacturer, 'Not Mentioned'),
+    COUNT(*) AS EligibleTruckCount
+FROM 
+    dbo.dummydatasetnew
+WHERE 
+    Weight_Tons >= 6
+    AND PurchaseDate BETWEEN '1997-01-01' AND '2013-12-31'
+    AND LEN(Vin) = 17
+    AND Vin NOT LIKE '%[^A-Za-z0-9]%' -- regix
+GROUP BY 
+    Manufacturer;
+
+
+// this query is created to find the clain value according to given/specified percentage e.g., 5%, 50%(for 2012-2017), 75% (for 2012) DOF truck only
+	SELECT 
+    Id,
+    Vin,
+    Manufacturer,
+    PurchaseTotalNetPrice,
+    CASE 
+        WHEN PurchaseDate IS NULL THEN 0
+        WHEN New_SecondHand = 'second_hand' AND YEAR(PurchaseDate) IN (2012, 2013) THEN PurchaseTotalNetPrice * 0.5 
+        WHEN New_SecondHand = 'second_hand' THEN PurchaseTotalNetPrice * 0.05 * 0.50
+        WHEN YEAR(PurchaseDate) IN (2012, 2013) THEN PurchaseTotalNetPrice  * 0.75
+       ELSE PurchaseTotalNetPrice * 0.05
+    END AS ClaimValue 
+FROM 
+    dbo.dummydatasetnew
+WHERE 
+    Manufacturer = 'dof'
+    AND Weight_Tons >= 6
+    AND PurchaseDate BETWEEN '1997-01-01' AND '2013-12-31'
+    AND LEN(Vin) = 17
+    AND Vin NOT LIKE '%[^A-Za-z0-9]%';
